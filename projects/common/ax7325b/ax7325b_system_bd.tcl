@@ -234,8 +234,8 @@ ad_mem_hp0_interconnect sys_200m_clk sys_bram_ctrl/S_AXI
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_DC
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_IC
 
-set_property range 16K [get_bd_addr_segs {sys_mb/Instruction/SEG_sys_bram_ctrl_Mem0}]
-set_property range 16K [get_bd_addr_segs {sys_mb/Data/SEG_sys_bram_ctrl_Mem0}]
+set_property range 512K [get_bd_addr_segs {sys_mb/Instruction/SEG_sys_bram_ctrl_Mem0}]
+set_property range 512K [get_bd_addr_segs {sys_mb/Data/SEG_sys_bram_ctrl_Mem0}]
 
-set_property range 1M [get_bd_addr_segs {sys_mb/Instruction/SEG_sys_ilmb_cntlr_Mem}]
-set_property range 1M [get_bd_addr_segs {sys_mb/Data/SEG_sys_dlmb_cntlr_Mem}]
+set_property range 512K [get_bd_addr_segs {sys_mb/Instruction/SEG_sys_ilmb_cntlr_Mem}]
+set_property range 512K [get_bd_addr_segs {sys_mb/Data/SEG_sys_dlmb_cntlr_Mem}]
