@@ -10,19 +10,10 @@ create_bd_port -dir I -type rst sys_rst
 create_bd_port -dir I sys_clk_p
 create_bd_port -dir I sys_clk_n
 
-create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 ddr3
-
-create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mdio_rtl:1.0 mdio
-create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mii_rtl:1.0 mii
-
-create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 gpio_lcd
-
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 iic_main
 
 create_bd_port -dir I uart_sin
 create_bd_port -dir O uart_sout
-
-create_bd_intf_port -mode Master -vlnv xilinx.com:interface:emc_rtl:1.0 linear_flash
 
 create_bd_port -dir O -from 7 -to 0 spi_csn_o
 create_bd_port -dir I -from 7 -to 0 spi_csn_i
@@ -76,19 +67,15 @@ ad_ip_parameter sys_rstgen CONFIG.C_EXT_RST_WIDTH 1
 ad_ip_instance proc_sys_reset sys_200m_rstgen
 ad_ip_parameter sys_200m_rstgen CONFIG.C_EXT_RST_WIDTH 1
 
-# instance: ddr (mig)
+# instance: clock generator
 
-ad_ip_instance mig_7series axi_ddr_cntrl
-set axi_ddr_cntrl_dir [get_property IP_DIR [get_ips [get_property CONFIG.Component_Name [get_bd_cells axi_ddr_cntrl]]]]
-file copy -force $ad_hdl_dir/projects/common/ax7325b/ax7325b_system_mig.prj "$axi_ddr_cntrl_dir/"
-ad_ip_parameter axi_ddr_cntrl CONFIG.XML_INPUT_FILE ax7325b_system_mig.prj
+ad_ip_instance clk_wiz sys_clkgen
+ad_ip_parameter sys_clkgen CONFIG.CLK_IN1_BOARD_INTERFACE sys_diff_clock
+ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_USED true
+ad_ip_parameter sys_clkgen CONFIG.CLKOUT1_REQUESTED_OUT_FREQ 100
+ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_REQUESTED_OUT_FREQ 200
 
 # instance: default peripherals
-
-ad_ip_instance axi_ethernetlite axi_ethernet
-ad_ip_parameter axi_ethernet CONFIG.USE_BOARD_FLOW true
-ad_ip_parameter axi_ethernet CONFIG.MII_BOARD_INTERFACE mii
-ad_ip_parameter axi_ethernet CONFIG.MDIO_BOARD_INTERFACE mdio_mdc
 
 ad_ip_instance axi_iic axi_iic_main
 
@@ -96,10 +83,6 @@ ad_ip_instance axi_uartlite axi_uart
 ad_ip_parameter axi_uart CONFIG.C_BAUDRATE 115200
 
 ad_ip_instance axi_timer axi_timer
-
-ad_ip_instance axi_gpio axi_gpio_lcd
-ad_ip_parameter axi_gpio_lcd CONFIG.C_GPIO_WIDTH 7
-ad_ip_parameter axi_gpio_lcd CONFIG.C_INTERRUPT_PRESENT 1
 
 ad_ip_instance axi_quad_spi axi_spi
 ad_ip_parameter axi_spi CONFIG.C_USE_STARTUP 0
@@ -120,23 +103,11 @@ ad_ip_parameter axi_intc CONFIG.C_HAS_FAST 0
 ad_ip_instance xlconcat sys_concat_intc
 ad_ip_parameter sys_concat_intc CONFIG.NUM_PORTS 16
 
-# linear flash
-
-ad_ip_instance axi_emc axi_linear_flash
-ad_ip_parameter axi_linear_flash CONFIG.USE_BOARD_FLOW true
-ad_ip_parameter axi_linear_flash CONFIG.EMC_BOARD_INTERFACE linear_flash
-ad_ip_parameter axi_linear_flash CONFIG.C_MEM0_TYPE 2
-ad_ip_parameter axi_linear_flash CONFIG.C_S_AXI_MEM_ID_WIDTH 0
-ad_ip_parameter axi_linear_flash CONFIG.C_THZCE_PS_MEM_0 20000
-ad_ip_parameter axi_linear_flash CONFIG.C_TLZWE_PS_MEM_0 0
-ad_ip_parameter axi_linear_flash CONFIG.C_TWC_PS_MEM_0 19000
-ad_ip_parameter axi_linear_flash CONFIG.C_WR_REC_TIME_MEM_0 0
-ad_ip_parameter axi_linear_flash CONFIG.C_TWP_PS_MEM_0 50000
-ad_ip_parameter axi_linear_flash CONFIG.C_TWPH_PS_MEM_0 20000
-ad_ip_parameter axi_linear_flash CONFIG.C_TPACC_PS_FLASH_0 25000
-ad_ip_parameter axi_linear_flash CONFIG.C_TCEDV_PS_MEM_0 100000
-ad_ip_parameter axi_linear_flash CONFIG.C_TAVDV_PS_MEM_0 100000
-ad_ip_parameter axi_linear_flash CONFIG.C_THZOE_PS_MEM_0 15000
+# dummy block ram
+ad_ip_instance axi_bram_ctrl sys_bram_ctrl
+ad_ip_parameter sys_bram_ctrl CONFIG.SINGLE_PORT_BRAM 1
+ad_ip_instance blk_mem_gen sys_bram
+ad_connect sys_bram_ctrl/BRAM_PORTA sys_bram/BRAM_PORTA 
 
 # system id
 
@@ -173,12 +144,11 @@ ad_connect sys_concat_intc/dout   axi_intc/intr
 
 # defaults (peripherals)
 
-ad_connect axi_ddr_cntrl/mmcm_locked   sys_rstgen/dcm_locked
-ad_connect axi_ddr_cntrl/mmcm_locked   sys_200m_rstgen/dcm_locked
+ad_connect sys_clkgen/locked   sys_rstgen/dcm_locked
+ad_connect sys_clkgen/locked   sys_200m_rstgen/dcm_locked
 
-ad_connect sys_cpu_clk    axi_ddr_cntrl/ui_addn_clk_0
-ad_connect sys_200m_clk   axi_ddr_cntrl/ui_clk
-ad_connect sys_cpu_resetn axi_ddr_cntrl/aresetn
+ad_connect sys_cpu_clk    sys_clkgen/clk_out1
+ad_connect sys_200m_clk   sys_clkgen/clk_out2
 ad_connect sys_cpu_reset  sys_rstgen/peripheral_reset
 ad_connect sys_cpu_resetn sys_rstgen/peripheral_aresetn
 ad_connect sys_200m_reset  sys_200m_rstgen/peripheral_reset
@@ -209,11 +179,11 @@ ad_connect sys_cpu_clk  axi_spi/ext_spi_clk
 # defaults (interrupts)
 
 ad_connect sys_concat_intc/In0    axi_timer/interrupt
-ad_connect sys_concat_intc/In1    axi_ethernet/ip2intc_irpt
+ad_connect sys_concat_intc/In1    GND
 ad_connect sys_concat_intc/In2    GND
 ad_connect sys_concat_intc/In3    GND
 ad_connect sys_concat_intc/In4    axi_uart/interrupt
-ad_connect sys_concat_intc/In5    axi_gpio_lcd/ip2intc_irpt
+ad_connect sys_concat_intc/In5    GND
 ad_connect sys_concat_intc/In6    GND
 ad_connect sys_concat_intc/In7    GND
 ad_connect sys_concat_intc/In8    GND
@@ -228,17 +198,12 @@ ad_connect sys_concat_intc/In15   GND
 # defaults (external interface)
 
 ad_connect  sys_rst sys_rstgen/ext_reset_in
-ad_connect  sys_rst axi_ddr_cntrl/sys_rst
-ad_connect  sys_200m_rst sys_200m_rstgen/ext_reset_in
-ad_connect  sys_200m_rst axi_ddr_cntrl/ui_clk_sync_rst
-ad_connect  sys_clk_p axi_ddr_cntrl/sys_clk_p
-ad_connect  sys_clk_n axi_ddr_cntrl/sys_clk_n
-ad_connect  ddr3 axi_ddr_cntrl/DDR3
-ad_connect  mdio axi_ethernet/mdio
-ad_connect  mii axi_ethernet/mii
+ad_connect  sys_rst sys_clkgen/reset
+ad_connect  sys_200m_rstgen/ext_reset_in GND
+ad_connect  sys_clk_p sys_clkgen/clk_in1_p
+ad_connect  sys_clk_n sys_clkgen/clk_in1_n
 ad_connect  uart_sin axi_uart/rx
 ad_connect  uart_sout axi_uart/tx
-ad_connect  gpio_lcd axi_gpio_lcd/gpio
 ad_connect  iic_main axi_iic_main/iic
 
 ad_connect  spi_csn_i axi_spi/ss_i
@@ -255,19 +220,14 @@ ad_connect  gpio1_i axi_gpio/gpio2_io_i
 ad_connect  gpio1_o axi_gpio/gpio2_io_o
 ad_connect  gpio1_t axi_gpio/gpio2_io_t
 
-# linear_flash
+# dummy bram
 
-ad_connect axi_linear_flash/EMC_INTF linear_flash
-
-ad_connect sys_cpu_resetn axi_linear_flash/s_axi_aresetn
-ad_connect sys_cpu_clk axi_linear_flash/s_axi_aclk
-ad_connect sys_cpu_clk axi_linear_flash/rdclk
+ad_connect sys_200m_clk    sys_bram_ctrl/s_axi_aclk
+ad_connect sys_200m_resetn sys_bram_ctrl/s_axi_aresetn
 
 # address map
 
 ad_cpu_interconnect 0x41400000 sys_mb_debug
-ad_cpu_interconnect 0x40E00000 axi_ethernet
-ad_cpu_interconnect 0x40010000 axi_gpio_lcd
 ad_cpu_interconnect 0x41200000 axi_intc
 ad_cpu_interconnect 0x41C00000 axi_timer
 ad_cpu_interconnect 0x40600000 axi_uart
@@ -275,20 +235,13 @@ ad_cpu_interconnect 0x41600000 axi_iic_main
 ad_cpu_interconnect 0x45000000 axi_sysid_0
 ad_cpu_interconnect 0x40000000 axi_gpio
 ad_cpu_interconnect 0x44A70000 axi_spi
-ad_cpu_interconnect 0x60000000 axi_linear_flash
 
-ad_mem_hp0_interconnect sys_200m_clk axi_ddr_cntrl/S_AXI
+ad_mem_hp0_interconnect sys_200m_clk sys_bram_ctrl/S_AXI
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_DC
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_IC
 
-create_bd_addr_seg -range 0x100000 -offset 0x0 [get_bd_addr_spaces sys_mb/Data] \
-  [get_bd_addr_segs sys_dlmb_cntlr/SLMB/Mem] SEG_dlmb_cntlr
-create_bd_addr_seg -range 0x100000 -offset 0x0 [get_bd_addr_spaces sys_mb/Instruction] \
-  [get_bd_addr_segs sys_ilmb_cntlr/SLMB/Mem] SEG_ilmb_cntlr
+set_property range 16K [get_bd_addr_segs {sys_mb/Instruction/SEG_sys_bram_ctrl_Mem0}]
+set_property range 16K [get_bd_addr_segs {sys_mb/Data/SEG_sys_bram_ctrl_Mem0}]
 
-set_property range 0x8000000 [get_bd_addr_segs {sys_mb/Data/SEG_data_axi_linear_flash}]
-set_property range 0x2000    [get_bd_addr_segs {sys_mb/Data/SEG_data_axi_ethernet}]
-
-ad_connect axi_ddr_cntrl/device_temp_i GND
-
-
+set_property range 1M [get_bd_addr_segs {sys_mb/Instruction/SEG_sys_ilmb_cntlr_Mem}]
+set_property range 1M [get_bd_addr_segs {sys_mb/Data/SEG_sys_dlmb_cntlr_Mem}]

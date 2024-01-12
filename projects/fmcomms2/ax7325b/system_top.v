@@ -44,48 +44,7 @@ module system_top (
   input                   uart_sin,
   output                  uart_sout,
 
-  output      [ 2:0]      ddr3_1_n,
-  output      [ 1:0]      ddr3_1_p,
-  output                  ddr3_reset_n,
-  output      [13:0]      ddr3_addr,
-  output      [ 2:0]      ddr3_ba,
-  output                  ddr3_cas_n,
-  output                  ddr3_ras_n,
-  output                  ddr3_we_n,
-  output      [ 0:0]      ddr3_ck_n,
-  output      [ 0:0]      ddr3_ck_p,
-  output      [ 0:0]      ddr3_cke,
-  output      [ 0:0]      ddr3_cs_n,
-  output      [ 7:0]      ddr3_dm,
-  inout       [63:0]      ddr3_dq,
-  inout       [ 7:0]      ddr3_dqs_n,
-  inout       [ 7:0]      ddr3_dqs_p,
-  output      [ 0:0]      ddr3_odt,
-
-  output                  mdio_mdc,
-  inout                   mdio_mdio,
-  output                  mii_rst_n,
-  input                   mii_col,
-  input                   mii_crs,
-  input                   mii_rx_clk,
-  input                   mii_rx_er,
-  input                   mii_rx_dv,
-  input       [ 3:0]      mii_rxd,
-  input                   mii_tx_clk,
-  output                  mii_tx_en,
-  output      [ 3:0]      mii_txd,
-
-  output      [26:1]      linear_flash_addr,
-  output                  linear_flash_adv_ldn,
-  output                  linear_flash_ce_n,
-  inout       [15:0]      linear_flash_dq_io,
-  output                  linear_flash_oen,
-  output                  linear_flash_wen,
-
   output                  fan_pwm,
-
-  inout       [ 6:0]      gpio_lcd,
-  inout       [16:0]      gpio_bd,
 
   output                  iic_rstn,
   inout                   iic_scl,
@@ -131,9 +90,6 @@ module system_top (
   wire            tdd_sync_i;
 
   // default logic
-
-  assign ddr3_1_p = 2'b11;
-  assign ddr3_1_n = 3'b000;
   assign fan_pwm  = 1'b1;
   assign iic_rstn = 1'b1;
   assign spi_csn_0 = spi_csn[0];
@@ -152,34 +108,10 @@ module system_top (
               gpio_ctl,
               gpio_status}));
 
-  ad_iobuf #(
-    .DATA_WIDTH(17)
-  ) i_iobuf_bd (
-    .dio_t (gpio_t[16:0]),
-    .dio_i (gpio_o[16:0]),
-    .dio_o (gpio_i[16:0]),
-    .dio_p (gpio_bd));
-
   assign gpio_i[63:47] = gpio_o[63:47];
-  assign gpio_i[31:17] = gpio_o[31:17];
+  assign gpio_i[31:0] = gpio_o[31:0];
 
   system_wrapper i_system_wrapper (
-    .ddr3_addr (ddr3_addr),
-    .ddr3_ba (ddr3_ba),
-    .ddr3_cas_n (ddr3_cas_n),
-    .ddr3_ck_n (ddr3_ck_n),
-    .ddr3_ck_p (ddr3_ck_p),
-    .ddr3_cke (ddr3_cke),
-    .ddr3_cs_n (ddr3_cs_n),
-    .ddr3_dm (ddr3_dm),
-    .ddr3_dq (ddr3_dq),
-    .ddr3_dqs_n (ddr3_dqs_n),
-    .ddr3_dqs_p (ddr3_dqs_p),
-    .ddr3_odt (ddr3_odt),
-    .ddr3_ras_n (ddr3_ras_n),
-    .ddr3_reset_n (ddr3_reset_n),
-    .ddr3_we_n (ddr3_we_n),
-    .gpio_lcd_tri_io (gpio_lcd),
     .iic_main_scl_io (iic_scl),
     .iic_main_sda_io (iic_sda),
     .gpio0_o (gpio_o[31:0]),
@@ -188,24 +120,6 @@ module system_top (
     .gpio1_o (gpio_o[63:32]),
     .gpio1_t (gpio_t[63:32]),
     .gpio1_i (gpio_i[63:32]),
-    .mdio_mdc (mdio_mdc),
-    .mdio_mdio_io (mdio_mdio),
-    .mii_col (mii_col),
-    .mii_crs (mii_crs),
-    .mii_rst_n (mii_rst_n),
-    .mii_rx_clk (mii_rx_clk),
-    .mii_rx_dv (mii_rx_dv),
-    .mii_rx_er (mii_rx_er),
-    .mii_rxd (mii_rxd),
-    .mii_tx_clk (mii_tx_clk),
-    .mii_tx_en (mii_tx_en),
-    .mii_txd (mii_txd),
-    .linear_flash_addr (linear_flash_addr),
-    .linear_flash_adv_ldn (linear_flash_adv_ldn),
-    .linear_flash_ce_n (linear_flash_ce_n),
-    .linear_flash_dq_io (linear_flash_dq_io),
-    .linear_flash_oen (linear_flash_oen),
-    .linear_flash_wen (linear_flash_wen),
     .sys_clk_n (sys_clk_n),
     .sys_clk_p (sys_clk_p),
     .sys_rst (sys_rst),
