@@ -10,8 +10,6 @@ create_bd_port -dir I -type rst sys_rst
 create_bd_port -dir I sys_clk_p
 create_bd_port -dir I sys_clk_n
 
-create_bd_intf_port -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 iic_main
-
 create_bd_port -dir I uart_sin
 create_bd_port -dir O uart_sout
 
@@ -76,8 +74,6 @@ ad_ip_parameter sys_clkgen CONFIG.CLKOUT1_REQUESTED_OUT_FREQ 100
 ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_REQUESTED_OUT_FREQ 200
 
 # instance: default peripherals
-
-ad_ip_instance axi_iic axi_iic_main
 
 ad_ip_instance axi_uartlite axi_uart
 ad_ip_parameter axi_uart CONFIG.C_BAUDRATE 115200
@@ -187,7 +183,7 @@ ad_connect sys_concat_intc/In5    GND
 ad_connect sys_concat_intc/In6    GND
 ad_connect sys_concat_intc/In7    GND
 ad_connect sys_concat_intc/In8    GND
-ad_connect sys_concat_intc/In9    axi_iic_main/iic2intc_irpt
+ad_connect sys_concat_intc/In9    GND
 ad_connect sys_concat_intc/In10   axi_spi/ip2intc_irpt
 ad_connect sys_concat_intc/In11   axi_gpio/ip2intc_irpt
 ad_connect sys_concat_intc/In12   GND
@@ -204,7 +200,6 @@ ad_connect  sys_clk_p sys_clkgen/clk_in1_p
 ad_connect  sys_clk_n sys_clkgen/clk_in1_n
 ad_connect  uart_sin axi_uart/rx
 ad_connect  uart_sout axi_uart/tx
-ad_connect  iic_main axi_iic_main/iic
 
 ad_connect  spi_csn_i axi_spi/ss_i
 ad_connect  spi_csn_o axi_spi/ss_o
@@ -231,7 +226,6 @@ ad_cpu_interconnect 0x41400000 sys_mb_debug
 ad_cpu_interconnect 0x41200000 axi_intc
 ad_cpu_interconnect 0x41C00000 axi_timer
 ad_cpu_interconnect 0x40600000 axi_uart
-ad_cpu_interconnect 0x41600000 axi_iic_main
 ad_cpu_interconnect 0x45000000 axi_sysid_0
 ad_cpu_interconnect 0x40000000 axi_gpio
 ad_cpu_interconnect 0x44A70000 axi_spi

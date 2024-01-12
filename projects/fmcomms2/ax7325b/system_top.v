@@ -46,10 +46,6 @@ module system_top (
 
   output                  fan_pwm,
 
-  output                  iic_rstn,
-  inout                   iic_scl,
-  inout                   iic_sda,
-
   input                   rx_clk_in_p,
   input                   rx_clk_in_n,
   input                   rx_frame_in_p,
@@ -91,7 +87,6 @@ module system_top (
 
   // default logic
   assign fan_pwm  = 1'b1;
-  assign iic_rstn = 1'b1;
   assign spi_csn_0 = spi_csn[0];
 
   // instantiations
@@ -112,8 +107,6 @@ module system_top (
   assign gpio_i[31:0] = gpio_o[31:0];
 
   system_wrapper i_system_wrapper (
-    .iic_main_scl_io (iic_scl),
-    .iic_main_sda_io (iic_sda),
     .gpio0_o (gpio_o[31:0]),
     .gpio0_t (gpio_t[31:0]),
     .gpio0_i (gpio_i[31:0]),
