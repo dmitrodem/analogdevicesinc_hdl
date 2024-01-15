@@ -4,6 +4,7 @@
 ###############################################################################
 
 # constraints
+create_clock -period 5.000 -name sys_clk_p [get_ports sys_clk_p]
 
 set_property -dict  {PACKAGE_PIN  AG27  IOSTANDARD  LVCMOS25} [get_ports sys_rst_n]
 

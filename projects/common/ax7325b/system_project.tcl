@@ -11,7 +11,6 @@ adi_project template_ax7325b
 adi_project_files template_ax7325b [list \
   "$ad_hdl_dir/library/common/ad_iobuf.v" \
   "$ad_hdl_dir/projects/common/ax7325b/ax7325b_system_constr.xdc" \
-  "system_constr.xdc"\
   "system_top.v" ]
 
 adi_project_run template_ax7325b
