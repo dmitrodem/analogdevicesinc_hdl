@@ -132,7 +132,7 @@ proc adi_project {project_name {mode 0} {parameter_list {}} } {
   }
   if [regexp "_ax7325b" $project_name] {
     set device "xc7k325tffg900-2"
-    set board [lindex [lsearch -all -inline [get_board_parts] *kc705*] end]
+    set board "not-applicable"
   }
 
   adi_project_create $project_name $mode $parameter_list $device $board

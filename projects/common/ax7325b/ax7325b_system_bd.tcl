@@ -7,8 +7,7 @@
 # interface ports
 
 create_bd_port -dir I -type rst sys_rst
-create_bd_port -dir I sys_clk_p
-create_bd_port -dir I sys_clk_n
+create_bd_port -dir I -type clk -freq_hz 200000000 sys_clk
 
 create_bd_port -dir I uart_sin
 create_bd_port -dir O uart_sout
@@ -68,7 +67,7 @@ ad_ip_parameter sys_200m_rstgen CONFIG.C_EXT_RST_WIDTH 1
 # instance: clock generator
 
 ad_ip_instance clk_wiz sys_clkgen
-ad_ip_parameter sys_clkgen CONFIG.CLK_IN1_BOARD_INTERFACE sys_diff_clock
+ad_ip_parameter sys_clkgen CONFIG.PRIM_SOURCE "No_buffer"
 ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_USED true
 ad_ip_parameter sys_clkgen CONFIG.CLKOUT1_REQUESTED_OUT_FREQ 100
 ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_REQUESTED_OUT_FREQ 200
@@ -196,8 +195,7 @@ ad_connect sys_concat_intc/In15   GND
 ad_connect  sys_rst sys_rstgen/ext_reset_in
 ad_connect  sys_rst sys_clkgen/reset
 ad_connect  sys_200m_rstgen/ext_reset_in GND
-ad_connect  sys_clk_p sys_clkgen/clk_in1_p
-ad_connect  sys_clk_n sys_clkgen/clk_in1_n
+ad_connect  sys_clk sys_clkgen/clk_in1
 ad_connect  uart_sin axi_uart/rx
 ad_connect  uart_sout axi_uart/tx
 

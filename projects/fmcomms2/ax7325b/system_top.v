@@ -37,7 +37,7 @@
 
 module system_top (
 
-  input                   sys_rst,
+  input                   sys_rst_n,
   input                   sys_clk_p,
   input                   sys_clk_n,
 
@@ -77,6 +77,8 @@ module system_top (
 
   // internal signals
 
+  wire            sys_clk;
+  wire            sys_rst;
   wire    [63:0]  gpio_i;
   wire    [63:0]  gpio_o;
   wire    [63:0]  gpio_t;
@@ -86,10 +88,17 @@ module system_top (
   wire            tdd_sync_i;
 
   // default logic
-  assign fan_pwm  = 1'b1;
+  assign fan_pwm  = 1'b0;
   assign spi_csn_0 = spi_csn[0];
+  assign sys_rst = ~sys_rst_n;
 
+  // assign uart_sout = uart_sin;
   // instantiations
+
+  IBUFDS i_sys_clkbuf (
+    .O  (sys_clk),
+    .I  (sys_clk_p),
+    .IB (sys_clk_n));
 
   ad_iobuf #(
     .DATA_WIDTH(15)
@@ -113,8 +122,7 @@ module system_top (
     .gpio1_o (gpio_o[63:32]),
     .gpio1_t (gpio_t[63:32]),
     .gpio1_i (gpio_i[63:32]),
-    .sys_clk_n (sys_clk_n),
-    .sys_clk_p (sys_clk_p),
+    .sys_clk (sys_clk),
     .sys_rst (sys_rst),
     .spi_clk_i (spi_clk),
     .spi_clk_o (spi_clk),
