@@ -11,6 +11,9 @@ create_bd_port -dir I -type clk -freq_hz 200000000 sys_clk_n
 
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 ddr3
 
+create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mdio_rtl:1.0 mdio
+create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mii_rtl:1.0 mii
+
 create_bd_port -dir I uart_sin
 create_bd_port -dir O uart_sout
 
@@ -74,6 +77,8 @@ file copy -force $ad_hdl_dir/projects/common/ax7325c/ax7325c_system_mig.prj "$ax
 ad_ip_parameter axi_ddr_cntrl CONFIG.XML_INPUT_FILE ax7325c_system_mig.prj
 
 # instance: default peripherals
+
+ad_ip_instance axi_ethernetlite axi_ethernet
 
 ad_ip_instance axi_uartlite axi_uart
 ad_ip_parameter axi_uart CONFIG.C_BAUDRATE 115200
@@ -170,7 +175,7 @@ ad_connect sys_cpu_clk  axi_spi/ext_spi_clk
 # defaults (interrupts)
 
 ad_connect sys_concat_intc/In0    axi_timer/interrupt
-ad_connect sys_concat_intc/In1    GND
+ad_connect sys_concat_intc/In1    axi_ethernet/ip2intc_irpt
 ad_connect sys_concat_intc/In2    GND
 ad_connect sys_concat_intc/In3    GND
 ad_connect sys_concat_intc/In4    axi_uart/interrupt
@@ -195,6 +200,8 @@ ad_connect  sys_200m_rst axi_ddr_cntrl/ui_clk_sync_rst
 ad_connect  sys_clk_p axi_ddr_cntrl/sys_clk_p
 ad_connect  sys_clk_n axi_ddr_cntrl/sys_clk_n
 ad_connect  ddr3 axi_ddr_cntrl/DDR3
+ad_connect  mdio axi_ethernet/mdio
+ad_connect  mii axi_ethernet/mii
 ad_connect  uart_sin axi_uart/rx
 ad_connect  uart_sout axi_uart/tx
 
@@ -215,6 +222,7 @@ ad_connect  gpio1_t axi_gpio/gpio2_io_t
 # address map
 
 ad_cpu_interconnect 0x41400000 sys_mb_debug
+ad_cpu_interconnect 0x40E00000 axi_ethernet
 ad_cpu_interconnect 0x41200000 axi_intc
 ad_cpu_interconnect 0x41C00000 axi_timer
 ad_cpu_interconnect 0x40600000 axi_uart
@@ -230,5 +238,7 @@ create_bd_addr_seg -range 0x20000 -offset 0x0 [get_bd_addr_spaces sys_mb/Data] \
   [get_bd_addr_segs sys_dlmb_cntlr/SLMB/Mem] SEG_dlmb_cntlr
 create_bd_addr_seg -range 0x20000 -offset 0x0 [get_bd_addr_spaces sys_mb/Instruction] \
   [get_bd_addr_segs sys_ilmb_cntlr/SLMB/Mem] SEG_ilmb_cntlr
+
+set_property range 0x2000    [get_bd_addr_segs {sys_mb/Data/SEG_data_axi_ethernet}]
 
 ad_connect axi_ddr_cntrl/device_temp_i GND

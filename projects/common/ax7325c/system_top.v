@@ -57,6 +57,20 @@ module system_top (
   output        ddr3_reset_n,
   output        ddr3_we_n,
 
+  output        mdio_mdc,
+  inout         mdio_mdio,
+  input         mii_col,
+  input         mii_crs,
+  output        mii_rst_n,
+  input         mii_rx_clk,
+  input         mii_rx_dv,
+  input         mii_rx_er,
+  input [3:0]   mii_rxd,
+  input         mii_tx_clk,
+  output        mii_tx_en,
+  output [3:0]  mii_txd,
+  output        mii_tx_er,
+
   input         uart_sin,
   output        uart_sout,
   output        fan_pwm
@@ -74,6 +88,7 @@ module system_top (
   // default logic
   assign fan_pwm = 1'b0;
   assign sys_rst = ~sys_rst_n;
+  assign mii_tx_er = 1'b0;
 
   // instantiations
   system_wrapper i_system_wrapper (
@@ -92,6 +107,19 @@ module system_top (
     .ddr3_ras_n (ddr3_ras_n),
     .ddr3_reset_n (ddr3_reset_n),
     .ddr3_we_n (ddr3_we_n),
+
+    .mdio_mdc (mdio_mdc),
+    .mdio_mdio_io (mdio_mdio),
+    .mii_col (mii_col),
+    .mii_crs (mii_crs),
+    .mii_rst_n (mii_rst_n),
+    .mii_rx_clk (mii_rx_clk),
+    .mii_rx_dv (mii_rx_dv),
+    .mii_rx_er (mii_rx_er),
+    .mii_rxd (mii_rxd),
+    .mii_tx_clk (mii_tx_clk),
+    .mii_tx_en (mii_tx_en),
+    .mii_txd (mii_txd),
 
     .gpio0_i (gpio_i[31:0]),
     .gpio0_o (gpio_o[31:0]),
