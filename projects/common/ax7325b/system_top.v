@@ -48,6 +48,7 @@ module system_top (
 
   // internal signals
   wire            sys_clk;
+  wire            sys_clk_bufg;
   wire            sys_rst;
   wire    [63:0]  gpio_i;
   wire    [63:0]  gpio_o;
@@ -65,6 +66,9 @@ module system_top (
     .O  (sys_clk),
     .I  (sys_clk_p),
     .IB (sys_clk_n));
+  BUFG i_sys_bufg (
+    .I (sys_clk),
+    .O (sys_clk_bufg));
   system_wrapper i_system_wrapper (
     .gpio0_i (gpio_i[31:0]),
     .gpio0_o (gpio_o[31:0]),
@@ -73,7 +77,7 @@ module system_top (
     .gpio1_o (gpio_o[63:32]),
     .gpio1_t (gpio_t[63:32]),
 
-    .sys_clk (sys_clk),
+    .sys_clk (sys_clk_bufg),
     .sys_rst (sys_rst),
 
     .uart_sin (uart_sin),
