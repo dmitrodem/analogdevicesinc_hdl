@@ -134,7 +134,10 @@ proc adi_project {project_name {mode 0} {parameter_list {}} } {
     set device "xc7k325tffg900-2"
     set board "not-applicable"
   }
-
+  if [regexp "_k7base." $project_name] {
+    set device "xc7k325tffg676-2"
+    set board "not-applicable"
+  }
   adi_project_create $project_name $mode $parameter_list $device $board
 }
 
