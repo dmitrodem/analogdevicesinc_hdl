@@ -57,7 +57,52 @@ module system_top (
   output wire        ddr3_we_n,
 
   input wire         uart_sin,
-  output wire        uart_sout
+  output wire        uart_sout,
+
+  inout wire         iic_main_scl_io,
+  inout wire         iic_main_sda_io,
+
+  output wire        phy_rst_n,
+  output wire        mdio_mdc,
+  inout wire         mdio_mdio_io,
+
+  input wire [3:0]   rgmii_rd,
+  input wire         rgmii_rx_ctl,
+  input wire         rgmii_rxc,
+  output wire [3:0]  rgmii_td,
+  output wire        rgmii_tx_ctl,
+  output wire        rgmii_txc,
+
+  output wire        gpio_led_1,
+  output wire        gpio_led_2,
+  output wire        gpio_led_3,
+  output wire        gpio_led_4,
+  output wire        gpio_led_5,
+  output wire        gpio_led_6,
+  output wire        gpio_led_7,
+  output wire        gpio_led_8,
+
+  input wire         gpio_key_2,
+  input wire         gpio_key_3,
+  input wire         gpio_key_4,
+  input wire         gpio_key_5,
+
+  output wire        sd_clk,
+  output wire [0:0]  sd_csn,
+  output wire        sd_mosi,
+  input wire         sd_miso,
+
+  inout wire         qspi_flash_io0_io,
+  inout wire         qspi_flash_io1_io,
+  inout wire         qspi_flash_io2_io,
+  inout wire         qspi_flash_io3_io,
+  inout wire [0:0]   qspi_flash_ss_io,
+
+  output wire        oled_d0,
+  output wire        oled_d1,
+  output wire        oled_dc,
+  output wire        oled_rstn
+
 );
 
   // internal signals
@@ -67,7 +112,23 @@ module system_top (
   wire    [63:0]  gpio_t;
 
   assign gpio_i[63:32] = gpio_o[63:32];
-  assign gpio_i[31:0]  = gpio_o[31:0];
+  assign gpio_i[31:0]  = {
+    gpio_o[31:12],
+    gpio_key_5, gpio_key_4, gpio_key_3, gpio_key_2,
+    gpio_o[7:0]
+  };
+
+  assign gpio_led_1 = gpio_o[0];
+  assign gpio_led_2 = gpio_o[1];
+  assign gpio_led_3 = gpio_o[2];
+  assign gpio_led_4 = gpio_o[3];
+  assign gpio_led_5 = gpio_o[4];
+  assign gpio_led_6 = gpio_o[5];
+  assign gpio_led_7 = gpio_o[6];
+  assign gpio_led_8 = gpio_o[7];
+
+  assign oled_dc    = gpio_o[12];
+  assign oled_rstn  = gpio_o[13];
 
   // default logic
   assign sys_rst = ~sys_rst_n;
@@ -103,14 +164,43 @@ module system_top (
     .uart_sin (uart_sin),
     .uart_sout (uart_sout),
 
+    .iic_main_scl_io (iic_main_scl_io),
+    .iic_main_sda_io (iic_main_sda_io),
+
+    .mdio_mdc (mdio_mdc),
+    .mdio_mdio_io (mdio_mdio_io),
+    .phy_rst_n (phy_rst_n),
+    .rgmii_rd (rgmii_rd),
+    .rgmii_rx_ctl (rgmii_rx_ctl),
+    .rgmii_rxc (rgmii_rxc),
+    .rgmii_td (rgmii_td),
+    .rgmii_tx_ctl (rgmii_tx_ctl),
+    .rgmii_txc (rgmii_txc),
+
     .spi_clk_i (1'b0),
     .spi_clk_o (),
     .spi_csn_i (8'h01),
     .spi_csn_o (),
     .spi_sdi_i (1'b0),
     .spi_sdo_i (1'b0),
-    .spi_sdo_o ()
+    .spi_sdo_o (),
+
+    .sd_clk (sd_clk),
+    .sd_csn (sd_csn),
+    .sd_mosi (sd_mosi),
+    .sd_miso (sd_miso),
+
+    .qspi_flash_io0_io (qspi_flash_io0_io),
+    .qspi_flash_io1_io (qspi_flash_io1_io),
+    .qspi_flash_io2_io (qspi_flash_io2_io),
+    .qspi_flash_io3_io (qspi_flash_io3_io),
+    .qspi_flash_ss_io  (qspi_flash_ss_io),
+
+    .oled_d0  (oled_d0),
+    .oled_d1  (oled_d1)
     );
+
+  PULLUP scl_PULLUP (.O (iic_main_scl_io));
 
 endmodule
 `default_nettype wire

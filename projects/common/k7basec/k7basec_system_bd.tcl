@@ -10,8 +10,11 @@ create_bd_port -dir I -type clk -freq_hz 50000000 sys_clk_50M
 
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 ddr3
 
-# create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mdio_rtl:1.0 mdio
-# create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mii_rtl:1.0 mii
+create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mdio_rtl:1.0 mdio
+create_bd_intf_port -mode Master -vlnv xilinx.com:interface:rgmii_rtl:1.0 rgmii
+create_bd_port -dir O phy_rst_n
+
+create_bd_intf_port -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 iic_main
 
 create_bd_port -dir I uart_sin
 create_bd_port -dir O uart_sout
@@ -31,6 +34,16 @@ create_bd_port -dir I -from 31 -to 0 gpio1_i
 create_bd_port -dir O -from 31 -to 0 gpio1_o
 create_bd_port -dir O -from 31 -to 0 gpio1_t
 
+create_bd_port -dir O sd_clk
+create_bd_port -dir O sd_csn
+create_bd_port -dir O sd_mosi
+create_bd_port -dir I sd_miso
+
+create_bd_intf_port -mode Master -vlnv xilinx.com:interface:spi_rtl:1.0 qspi_flash
+
+create_bd_port -dir O oled_d0
+create_bd_port -dir O oled_d1
+
 # io settings
 
 set_property -dict [list CONFIG.POLARITY {ACTIVE_HIGH}] [get_bd_ports sys_rst]
@@ -39,7 +52,12 @@ set_property -dict [list CONFIG.POLARITY {ACTIVE_HIGH}] [get_bd_ports sys_rst]
 ad_ip_instance clk_wiz sys_clkgen
 ad_ip_parameter sys_clkgen CONFIG.USE_LOCKED "false"
 ad_ip_parameter sys_clkgen CONFIG.USE_RESET  "false"
+ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_USED "true"
 ad_ip_parameter sys_clkgen CONFIG.CLKOUT1_REQUESTED_OUT_FREQ 200
+ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_REQUESTED_OUT_FREQ 125
+
+# instance: jtag
+ad_ip_instance jtag_axi sys_jtag
 
 # instance: microblaze - processor
 
@@ -66,6 +84,7 @@ ad_ip_parameter sys_lmb_bram CONFIG.use_bram_block BRAM_Controller
 
 ad_ip_instance mdm sys_mb_debug
 ad_ip_parameter sys_mb_debug CONFIG.C_USE_UART 1
+# ad_ip_parameter sys_mb_debug CONFIG.C_DBG_MEM_ACCESS 1
 
 # instance: system reset/clocks
 
@@ -83,7 +102,21 @@ ad_ip_parameter axi_ddr_cntrl CONFIG.XML_INPUT_FILE k7basec_system_mig.prj
 
 # instance: default peripherals
 
-# ad_ip_instance axi_ethernetlite axi_ethernet
+ad_ip_instance axi_ethernet axi_ethernet
+ad_ip_parameter axi_ethernet CONFIG.PHY_TYPE    "RGMII"
+ad_ip_parameter axi_ethernet CONFIG.speed_1_2p5 "1G"
+ad_ip_parameter axi_ethernet CONFIG.TXCSUM      "Full"
+ad_ip_parameter axi_ethernet CONFIG.RXCSUM      "Full"
+ad_ip_parameter axi_ethernet CONFIG.TXMEM       "8k"
+ad_ip_parameter axi_ethernet CONFIG.RXMEM       "8k"
+
+ad_ip_instance axi_dma axi_ethernet_dma
+ad_ip_parameter axi_ethernet_dma CONFIG.c_sg_use_stsapp_length 1
+ad_ip_parameter axi_ethernet_dma CONFIG.c_include_mm2s_dre     1
+ad_ip_parameter axi_ethernet_dma CONFIG.c_include_s2mm_dre     1
+ad_ip_parameter axi_ethernet_dma CONFIG.c_sg_length_width      16
+
+ad_ip_instance axi_iic axi_iic_main
 
 ad_ip_instance axi_uartlite axi_uart
 ad_ip_parameter axi_uart CONFIG.C_BAUDRATE 115200
@@ -94,6 +127,21 @@ ad_ip_instance axi_quad_spi axi_spi
 ad_ip_parameter axi_spi CONFIG.C_USE_STARTUP 0
 ad_ip_parameter axi_spi CONFIG.C_NUM_SS_BITS 8
 ad_ip_parameter axi_spi CONFIG.C_SCK_RATIO 8
+
+ad_ip_instance axi_quad_spi axi_mmc
+ad_ip_parameter axi_mmc CONFIG.C_USE_STARTUP 0
+ad_ip_parameter axi_mmc CONFIG.C_NUM_SS_BITS 1
+ad_ip_parameter axi_mmc CONFIG.C_SCK_RATIO 8
+
+ad_ip_instance axi_quad_spi axi_qspi
+ad_ip_parameter axi_qspi CONFIG.C_SPI_MEMORY     4
+ad_ip_parameter axi_qspi CONFIG.C_SPI_MODE       2
+ad_ip_parameter axi_qspi CONFIG.C_USE_STARTUP    1
+
+ad_ip_instance axi_quad_spi axi_oled
+ad_ip_parameter axi_oled CONFIG.C_USE_STARTUP 0
+ad_ip_parameter axi_oled CONFIG.C_NUM_SS_BITS 1
+ad_ip_parameter axi_oled CONFIG.C_SCK_RATIO 8
 
 ad_ip_instance axi_gpio axi_gpio
 ad_ip_parameter axi_gpio CONFIG.C_IS_DUAL 1
@@ -154,6 +202,7 @@ ad_connect sys_cpu_reset  sys_rstgen/peripheral_reset
 ad_connect sys_cpu_resetn sys_rstgen/peripheral_aresetn
 ad_connect sys_200m_reset  sys_200m_rstgen/peripheral_reset
 ad_connect sys_200m_resetn sys_200m_rstgen/peripheral_aresetn
+ad_connect gtx_clk sys_clkgen/clk_out2
 
 # generic system clocks pointers
 
@@ -176,26 +225,56 @@ ad_connect sys_cpu_clk  sys_ilmb/LMB_Clk
 ad_connect sys_cpu_clk  sys_dlmb_cntlr/LMB_Clk
 ad_connect sys_cpu_clk  sys_ilmb_cntlr/LMB_Clk
 ad_connect sys_cpu_clk  axi_spi/ext_spi_clk
+ad_connect sys_cpu_clk  axi_mmc/ext_spi_clk
+ad_connect sys_cpu_clk  axi_qspi/ext_spi_clk
+ad_connect sys_cpu_clk  axi_oled/ext_spi_clk
+
+# jtag
+# ad_connect sys_cpu_clk    sys_jtag/aclk
+# ad_connect sys_cpu_resetn sys_jtag/aresetn
+
+# ethernet & dma
+ad_connect sys_cpu_clk axi_ethernet/axis_clk
+ad_connect sys_cpu_clk axi_ethernet_dma/m_axi_sg_aclk
+ad_connect sys_cpu_clk axi_ethernet_dma/m_axi_mm2s_aclk
+ad_connect sys_cpu_clk axi_ethernet_dma/m_axi_s2mm_aclk
+
+ad_connect axi_ethernet/axi_txd_arstn axi_ethernet_dma/mm2s_prmry_reset_out_n
+ad_connect axi_ethernet/axi_txc_arstn axi_ethernet_dma/mm2s_cntrl_reset_out_n
+ad_connect axi_ethernet/axi_rxd_arstn axi_ethernet_dma/s2mm_prmry_reset_out_n
+ad_connect axi_ethernet/axi_rxs_arstn axi_ethernet_dma/s2mm_sts_reset_out_n
+
+ad_connect axi_ethernet/gtx_clk gtx_clk
+ad_connect axi_ethernet/ref_clk sys_200m_clk
+
+ad_connect axi_ethernet/s_axis_txd axi_ethernet_dma/M_AXIS_MM2S
+ad_connect axi_ethernet/s_axis_txc axi_ethernet_dma/M_AXIS_CNTRL
+ad_connect axi_ethernet/m_axis_rxd axi_ethernet_dma/S_AXIS_S2MM
+ad_connect axi_ethernet/m_axis_rxs axi_ethernet_dma/S_AXIS_STS
+
+ad_connect axi_ethernet/mdio mdio
+ad_connect axi_ethernet/rgmii rgmii
+ad_connect axi_ethernet/phy_rst_n phy_rst_n
+
 
 # defaults (interrupts)
 
 ad_connect sys_concat_intc/In0    axi_timer/interrupt
-# ad_connect sys_concat_intc/In1    axi_ethernet/ip2intc_irpt
-ad_connect sys_concat_intc/In1    GND
-ad_connect sys_concat_intc/In2    GND
-ad_connect sys_concat_intc/In3    GND
+ad_connect sys_concat_intc/In1    axi_ethernet/interrupt
+ad_connect sys_concat_intc/In2    axi_ethernet_dma/mm2s_introut
+ad_connect sys_concat_intc/In3    axi_ethernet_dma/s2mm_introut
 ad_connect sys_concat_intc/In4    axi_uart/interrupt
 ad_connect sys_concat_intc/In5    GND
 ad_connect sys_concat_intc/In6    GND
 ad_connect sys_concat_intc/In7    GND
 ad_connect sys_concat_intc/In8    GND
-ad_connect sys_concat_intc/In9    GND
+ad_connect sys_concat_intc/In9    axi_iic_main/iic2intc_irpt
 ad_connect sys_concat_intc/In10   axi_spi/ip2intc_irpt
 ad_connect sys_concat_intc/In11   axi_gpio/ip2intc_irpt
-ad_connect sys_concat_intc/In12   GND
-ad_connect sys_concat_intc/In13   GND
-ad_connect sys_concat_intc/In14   GND
-ad_connect sys_concat_intc/In15   GND
+ad_connect sys_concat_intc/In12   axi_oled/ip2intc_irpt
+ad_connect sys_concat_intc/In13   axi_qspi/ip2intc_irpt
+ad_connect sys_concat_intc/In14   sys_mb_debug/Interrupt
+ad_connect sys_concat_intc/In15   axi_mmc/ip2intc_irpt
 
 # defaults (external interface)
 ad_connect  sys_clk_50M sys_clkgen/clk_in1
@@ -210,6 +289,7 @@ ad_connect  ddr3 axi_ddr_cntrl/DDR3
 # ad_connect  mii axi_ethernet/mii
 ad_connect  uart_sin axi_uart/rx
 ad_connect  uart_sout axi_uart/tx
+ad_connect  iic_main axi_iic_main/iic
 
 ad_connect  spi_csn_i axi_spi/ss_i
 ad_connect  spi_csn_o axi_spi/ss_o
@@ -225,26 +305,44 @@ ad_connect  gpio1_i axi_gpio/gpio2_io_i
 ad_connect  gpio1_o axi_gpio/gpio2_io_o
 ad_connect  gpio1_t axi_gpio/gpio2_io_t
 
+ad_connect sd_clk axi_mmc/sck_o
+ad_connect sd_csn axi_mmc/ss_o
+ad_connect sd_mosi axi_mmc/io0_o
+ad_connect sd_miso axi_mmc/io1_i
+
+ad_connect qspi_flash axi_qspi/SPI_0
+
+ad_connect oled_d0  axi_oled/sck_o
+ad_connect oled_d1  axi_oled/io0_o
+
 # address map
 
 ad_cpu_interconnect 0x41400000 sys_mb_debug
-# ad_cpu_interconnect 0x40E00000 axi_ethernet
+ad_cpu_interconnect 0x40E00000 axi_ethernet
+ad_cpu_interconnect 0x41E10000 axi_ethernet_dma
 ad_cpu_interconnect 0x41200000 axi_intc
 ad_cpu_interconnect 0x41C00000 axi_timer
 ad_cpu_interconnect 0x40600000 axi_uart
+ad_cpu_interconnect 0x41600000 axi_iic_main
 ad_cpu_interconnect 0x45000000 axi_sysid_0
 ad_cpu_interconnect 0x40000000 axi_gpio
 ad_cpu_interconnect 0x44A70000 axi_spi
+ad_cpu_interconnect 0x44A80000 axi_mmc
+ad_cpu_interconnect 0x44A90000 axi_qspi
+ad_cpu_interconnect 0x44AA0000 axi_oled
 
 ad_mem_hp0_interconnect sys_200m_clk axi_ddr_cntrl/S_AXI
+ad_mem_hp0_interconnect sys_cpu_clk sys_jtag/M_AXI
+# ad_mem_hp0_interconnect sys_cpu_clk sys_mb_debug/M_AXI
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_DC
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_IC
+ad_mem_hp0_interconnect sys_cpu_clk axi_ethernet_dma/M_AXI_SG
+ad_mem_hp0_interconnect sys_cpu_clk axi_ethernet_dma/M_AXI_MM2S
+ad_mem_hp0_interconnect sys_cpu_clk axi_ethernet_dma/M_AXI_S2MM
 
 create_bd_addr_seg -range 0x20000 -offset 0x0 [get_bd_addr_spaces sys_mb/Data] \
   [get_bd_addr_segs sys_dlmb_cntlr/SLMB/Mem] SEG_dlmb_cntlr
 create_bd_addr_seg -range 0x20000 -offset 0x0 [get_bd_addr_spaces sys_mb/Instruction] \
   [get_bd_addr_segs sys_ilmb_cntlr/SLMB/Mem] SEG_ilmb_cntlr
-
-# set_property range 0x2000    [get_bd_addr_segs {sys_mb/Data/SEG_data_axi_ethernet}]
 
 ad_connect axi_ddr_cntrl/device_temp_i GND
