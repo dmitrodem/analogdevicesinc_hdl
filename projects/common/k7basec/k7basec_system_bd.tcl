@@ -56,9 +56,6 @@ ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_USED "true"
 ad_ip_parameter sys_clkgen CONFIG.CLKOUT1_REQUESTED_OUT_FREQ 200
 ad_ip_parameter sys_clkgen CONFIG.CLKOUT2_REQUESTED_OUT_FREQ 125
 
-# instance: jtag
-ad_ip_instance jtag_axi sys_jtag
-
 # instance: microblaze - processor
 
 ad_ip_instance microblaze sys_mb
@@ -229,10 +226,6 @@ ad_connect sys_cpu_clk  axi_mmc/ext_spi_clk
 ad_connect sys_cpu_clk  axi_qspi/ext_spi_clk
 ad_connect sys_cpu_clk  axi_oled/ext_spi_clk
 
-# jtag
-# ad_connect sys_cpu_clk    sys_jtag/aclk
-# ad_connect sys_cpu_resetn sys_jtag/aresetn
-
 # ethernet & dma
 ad_connect sys_cpu_clk axi_ethernet/axis_clk
 ad_connect sys_cpu_clk axi_ethernet_dma/m_axi_sg_aclk
@@ -332,7 +325,6 @@ ad_cpu_interconnect 0x44A90000 axi_qspi
 ad_cpu_interconnect 0x44AA0000 axi_oled
 
 ad_mem_hp0_interconnect sys_200m_clk axi_ddr_cntrl/S_AXI
-ad_mem_hp0_interconnect sys_cpu_clk sys_jtag/M_AXI
 # ad_mem_hp0_interconnect sys_cpu_clk sys_mb_debug/M_AXI
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_DC
 ad_mem_hp0_interconnect sys_cpu_clk sys_mb/M_AXI_IC
