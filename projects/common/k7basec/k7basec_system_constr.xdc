@@ -41,8 +41,12 @@ set_property -dict {IOSTANDARD LVCMOS18 PACKAGE_PIN   Y1} [get_ports {rgmii_tx_c
 set_property -dict {IOSTANDARD LVCMOS18 PACKAGE_PIN  AC2} [get_ports {rgmii_txc}]
 
 # EEPROM I2C
-set_property -dict {IOSTANDARD LVCMOS33 PACKAGE_PIN  B21} [get_ports {iic_main_scl_io}]
-set_property -dict {IOSTANDARD LVCMOS33 PACKAGE_PIN  C21} [get_ports {iic_main_sda_io}]
+set_property -dict {IOSTANDARD LVCMOS33 PACKAGE_PIN  B21 PULLUP TRUE} [get_ports {iic_eeprom_scl_io}]
+set_property -dict {IOSTANDARD LVCMOS33 PACKAGE_PIN  C21 PULLUP TRUE} [get_ports {iic_eeprom_sda_io}]
+
+# FMC I2C
+set_property -dict {IOSTANDARD LVCMOS33 PACKAGE_PIN  C19 PULLUP TRUE} [get_ports {iic_main_scl_io}]
+set_property -dict {IOSTANDARD LVCMOS33 PACKAGE_PIN  B19 PULLUP TRUE} [get_ports {iic_main_sda_io}]
 
 # GPIO LEDs & Buttons
 set_property -dict {IOSTANDARD LVCMOS33 PACKAGE_PIN  A23} [get_ports {gpio_led_1}]

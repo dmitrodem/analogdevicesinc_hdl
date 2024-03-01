@@ -62,6 +62,9 @@ module system_top (
   inout wire         iic_main_scl_io,
   inout wire         iic_main_sda_io,
 
+  inout wire         iic_eeprom_scl_io,
+  inout wire         iic_eeprom_sda_io,
+
   output wire        phy_rst_n,
   output wire        mdio_mdc,
   inout wire         mdio_mdio_io,
@@ -167,6 +170,9 @@ module system_top (
     .iic_main_scl_io (iic_main_scl_io),
     .iic_main_sda_io (iic_main_sda_io),
 
+    .iic_eeprom_scl_io (iic_eeprom_scl_io),
+    .iic_eeprom_sda_io (iic_eeprom_sda_io),
+
     .mdio_mdc (mdio_mdc),
     .mdio_mdio_io (mdio_mdio_io),
     .phy_rst_n (phy_rst_n),
@@ -199,8 +205,6 @@ module system_top (
     .oled_d0  (oled_d0),
     .oled_d1  (oled_d1)
     );
-
-  PULLUP scl_PULLUP (.O (iic_main_scl_io));
 
 endmodule
 `default_nettype wire

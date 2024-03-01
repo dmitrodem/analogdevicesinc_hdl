@@ -15,6 +15,7 @@ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:rgmii_rtl:1.0 rgmii
 create_bd_port -dir O phy_rst_n
 
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 iic_main
+create_bd_intf_port -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 iic_eeprom
 
 create_bd_port -dir I uart_sin
 create_bd_port -dir O uart_sout
@@ -114,6 +115,8 @@ ad_ip_parameter axi_ethernet_dma CONFIG.c_include_s2mm_dre     1
 ad_ip_parameter axi_ethernet_dma CONFIG.c_sg_length_width      16
 
 ad_ip_instance axi_iic axi_iic_main
+
+ad_ip_instance axi_iic axi_iic_eeprom
 
 ad_ip_instance axi_uartlite axi_uart
 ad_ip_parameter axi_uart CONFIG.C_BAUDRATE 115200
@@ -257,15 +260,15 @@ ad_connect sys_concat_intc/In1    axi_ethernet/interrupt
 ad_connect sys_concat_intc/In2    axi_ethernet_dma/mm2s_introut
 ad_connect sys_concat_intc/In3    axi_ethernet_dma/s2mm_introut
 ad_connect sys_concat_intc/In4    axi_uart/interrupt
-ad_connect sys_concat_intc/In5    GND
-ad_connect sys_concat_intc/In6    GND
-ad_connect sys_concat_intc/In7    GND
+ad_connect sys_concat_intc/In5    axi_oled/ip2intc_irpt
+ad_connect sys_concat_intc/In6    axi_qspi/ip2intc_irpt
+ad_connect sys_concat_intc/In7    axi_iic_eeprom/iic2intc_irpt
 ad_connect sys_concat_intc/In8    GND
 ad_connect sys_concat_intc/In9    axi_iic_main/iic2intc_irpt
 ad_connect sys_concat_intc/In10   axi_spi/ip2intc_irpt
 ad_connect sys_concat_intc/In11   axi_gpio/ip2intc_irpt
-ad_connect sys_concat_intc/In12   axi_oled/ip2intc_irpt
-ad_connect sys_concat_intc/In13   axi_qspi/ip2intc_irpt
+ad_connect sys_concat_intc/In12   GND
+ad_connect sys_concat_intc/In13   GND
 ad_connect sys_concat_intc/In14   sys_mb_debug/Interrupt
 ad_connect sys_concat_intc/In15   axi_mmc/ip2intc_irpt
 
@@ -282,7 +285,8 @@ ad_connect  ddr3 axi_ddr_cntrl/DDR3
 # ad_connect  mii axi_ethernet/mii
 ad_connect  uart_sin axi_uart/rx
 ad_connect  uart_sout axi_uart/tx
-ad_connect  iic_main axi_iic_main/iic
+ad_connect  iic_main   axi_iic_main/iic
+ad_connect  iic_eeprom axi_iic_eeprom/iic
 
 ad_connect  spi_csn_i axi_spi/ss_i
 ad_connect  spi_csn_o axi_spi/ss_o
@@ -323,6 +327,7 @@ ad_cpu_interconnect 0x44A70000 axi_spi
 ad_cpu_interconnect 0x44A80000 axi_mmc
 ad_cpu_interconnect 0x44A90000 axi_qspi
 ad_cpu_interconnect 0x44AA0000 axi_oled
+ad_cpu_interconnect 0x44AB0000 axi_iic_eeprom
 
 ad_mem_hp0_interconnect sys_200m_clk axi_ddr_cntrl/S_AXI
 # ad_mem_hp0_interconnect sys_cpu_clk sys_mb_debug/M_AXI
